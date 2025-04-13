@@ -5,60 +5,110 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 const GRAVITY = 0.5
 const JUMP_STRENGTH = 12
 const MOVE_SPEED = 5
-const CAT_WIDTH = 75  // 黑猫大小1.5倍
-const CAT_HEIGHT = 75
-const SUNFLOWER_SIZE = 30
+const CAT_WIDTH = 50
+const CAT_HEIGHT = 50
+const SUNFLOWER_SIZE = 20
 const SCORE_BG_WIDTH = 200
 const SCORE_BG_HEIGHT = 60
 
-// 预定义方块位置和类型，根据新的图片重新调整
+// 移除网格系统，使用精确像素值
 const BLOCKS = [
-  // 第一行
-  { x: 50, y: 100, type: '块1-默认起点', width: 200, height: 100 },  // 默认起点
+  // 深度工作（块3）- 顶部中间
+  { 
+    x: 536,      // 从左边距离
+    y: 201,      // 从顶部距离
+    type: '块3-深度工作',
+    width: 384,   // 块的宽度
+    height: 64    // 统一高度为64
+  },
 
-  // 第二行
-  { x: 200, y: 200, type: '块2-启动', width: 200, height: 100 },     // 启动
-  { x: 400, y: 200, type: '块3-深度工作', width: 300, height: 100 }, // 深度工作
+  // 启动（块2）- 中上方
+  { 
+    x: 402,
+    y: 469,
+    type: '块2-启动',
+    width: 192,
+    height: 64
+  },
 
-  // 第三行
-  { x: 300, y: 300, type: '块4-午间空地', width: 200, height: 100 }, // 午间空地
+  // 午间空地（块4）- 右上方
+  { 
+    x: 1072,
+    y: 469,
+    type: '块4-午间空地',
+    width: 192,
+    height: 64
+  },
 
-  // 第四行
-  { x: 200, y: 400, type: '块5-漫游玩耍', width: 400, height: 100 }, // 漫游玩耍
+  // 默认起点（块1）- 左下方
+  { 
+    x: 134,
+    y: 737,
+    type: '块1-默认起点',
+    width: 192,
+    height: 64
+  },
 
-  // 第五行
-  { x: 500, y: 500, type: '块6-关机', width: 200, height: 100 },     // 关机
-  { x: 700, y: 500, type: '块7-浅度工作', width: 200, height: 100 }  // 浅度工作
+  // 浅度工作（块7）- 右下方
+  { 
+    x: 1206,
+    y: 737,
+    type: '块7-浅度工作',
+    width: 255,
+    height: 64
+  },
+
+  // 漫游玩耍（块5）- 中下方
+  { 
+    x: 536,
+    y: 938,
+    type: '块5-漫游玩耍',
+    width: 384,
+    height: 64    // 从67改为64
+  },
+
+  // 关机（块6）- 底部中间
+  { 
+    x: 536,
+    y: 1139,
+    type: '块6-关机',
+    width: 192,
+    height: 64
+  }
 ]
 
-// 预定义向日葵位置
+// 更新向日葵位置
 const SUNFLOWER_POSITIONS = [
-  // 左上角区域
-  { x: 180, y: 400 },  // Morning! 区域
-  { x: 240, y: 350 },
+  // 默认起点区域（块1）
+  { x: 134, y: 670 },
+  { x: 268, y: 670 },
   
-  // 中上部区域
-  { x: 400, y: 100 },  // Focus 区域附近
-  { x: 450, y: 150 },
-  { x: 500, y: 200 },
+  // 启动区域（块2）
+  { x: 402, y: 402 },
+  { x: 536, y: 402 },
   
-  // 右上角区域
-  { x: 700, y: 200 },  // 休耕区域
-  { x: 750, y: 250 },
+  // 深度工作区域（块3）
+  { x: 536, y: 134 },
+  { x: 670, y: 134 },
+  { x: 804, y: 134 },
   
-  // 中部区域
-  { x: 300, y: 300 },  // Warn Up 区域
-  { x: 350, y: 350 },
-  { x: 500, y: 300 },  // 深度工作区域
-  { x: 550, y: 350 },
+  // 午间空地区域（块4）
+  { x: 1072, y: 402 },
+  { x: 1206, y: 402 },
   
-  // 右部区域
-  { x: 650, y: 400 },  // 午间空地
-  { x: 700, y: 450 },
+  // 漫游玩耍区域（块5）
+  { x: 536, y: 871 },
+  { x: 670, y: 871 },
+  { x: 804, y: 871 },
+  { x: 938, y: 871 },
   
-  // 底部区域
-  { x: 400, y: 500 },  // Play! 区域
-  { x: 450, y: 550 }
+  // 关机区域（块6）
+  { x: 536, y: 1072 },
+  { x: 670, y: 1072 },
+  
+  // 浅度工作区域（块7）
+  { x: 1206, y: 670 },
+  { x: 1340, y: 670 }
 ]
 
 interface Cat {
@@ -89,8 +139,8 @@ interface Block {
 export default function MarioCat() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [cat, setCat] = useState<Cat>({
-    x: 100,
-    y: 100,  // 调整初始位置到第一个方块上
+    x: 134,  // 起始位置在第一个方块上
+    y: 670,  // 稍微高于第一个方块
     velocityY: 0,
     velocityX: 0,
     velocityYManual: 0,
@@ -398,8 +448,8 @@ export default function MarioCat() {
     <div className="relative">
       <canvas
         ref={canvasRef}
-        width={1000}   // 调整画布大小以适应新的布局
-        height={800}
+        width={1340}    // 设置为精确的宽度
+        height={952}    // 设置为精确的高度
         className="border border-gray-300"
       />
     </div>
