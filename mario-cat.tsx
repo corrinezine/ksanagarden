@@ -457,10 +457,6 @@ export default function MarioCat() {
 
       // 绘制当前块名称
       if (currentBlock) {
-        // 绘制半透明背景
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-        ctx.fillRect(0, SCORE_BG_HEIGHT, canvas.width, BLOCK_NAME_HEIGHT)
-        
         // 绘制文本
         ctx.fillStyle = '#FFFFFF'
         ctx.font = 'bold 32px Arial'
@@ -468,8 +464,8 @@ export default function MarioCat() {
         ctx.textBaseline = 'middle'
         ctx.fillText(
           currentBlock,
-          canvas.width / 2,
-          SCORE_BG_HEIGHT + BLOCK_NAME_HEIGHT / 2
+          canvas.width / 2,  // 水平居中
+          8                  // 固定在顶部8像素位置
         )
       }
     }, 1000 / 60)
