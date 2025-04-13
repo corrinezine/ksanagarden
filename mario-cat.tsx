@@ -3,110 +3,111 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 
 const GRAVITY = 0.5
-const JUMP_STRENGTH = 12
-const MOVE_SPEED = 5
-const CAT_WIDTH = 50
-const CAT_HEIGHT = 50
-const SUNFLOWER_SIZE = 20
-const SCORE_BG_WIDTH = 200
-const SCORE_BG_HEIGHT = 60
+const JUMP_STRENGTH = 15
+const MOVE_SPEED = 7
+const CAT_WIDTH = 118
+const CAT_HEIGHT = 118
+const SUNFLOWER_SIZE = 45
+const SCORE_BG_WIDTH = 256
+const SCORE_BG_HEIGHT = 128
+const BLOCK_NAME_HEIGHT = 60  // 添加块名称显示区域高度
 
 // 移除网格系统，使用精确像素值
 const BLOCKS = [
-  // 深度工作（块3）- 顶部中间
+  // 块1 - 默认起点（左下方）
   { 
-    x: 536,      // 从左边距离
-    y: 201,      // 从顶部距离
-    type: '块3-深度工作',
-    width: 384,   // 块的宽度
-    height: 64    // 统一高度为64
-  },
-
-  // 启动（块2）- 中上方
-  { 
-    x: 402,
-    y: 469,
-    type: '块2-启动',
-    width: 192,
-    height: 64
-  },
-
-  // 午间空地（块4）- 右上方
-  { 
-    x: 1072,
-    y: 469,
-    type: '块4-午间空地',
-    width: 192,
-    height: 64
-  },
-
-  // 默认起点（块1）- 左下方
-  { 
-    x: 134,
-    y: 737,
+    x: 192,
+    y: 576,
     type: '块1-默认起点',
     width: 192,
     height: 64
   },
 
-  // 浅度工作（块7）- 右下方
+  // 块2 - 启动（中上方）
   { 
-    x: 1206,
-    y: 737,
-    type: '块7-浅度工作',
-    width: 255,
+    x: 386,
+    y: 448,
+    type: '块2-启动',
+    width: 192,
     height: 64
   },
 
-  // 漫游玩耍（块5）- 中下方
+  // 块3 - 深度工作（顶部中间）
   { 
-    x: 536,
-    y: 938,
-    type: '块5-漫游玩耍',
+    x: 576,
+    y: 320,
+    type: '块3-深度工作',
     width: 384,
-    height: 64    // 从67改为64
+    height: 64
   },
 
-  // 关机（块6）- 底部中间
+  // 块4 - 午间空地（右上方）
   { 
-    x: 536,
-    y: 1139,
+    x: 960,
+    y: 448,
+    type: '块4-午间空地',
+    width: 192,
+    height: 64
+  },
+
+  // 块5 - 漫游玩耍（中下方）
+  { 
+    x: 646,
+    y: 640,
+    type: '块5-漫游玩耍',
+    width: 384,
+    height: 64
+  },
+
+  // 块6 - 关机（底部中间）
+  { 
+    x: 451,
+    y: 768,
     type: '块6-关机',
     width: 192,
+    height: 64
+  },
+
+  // 块7 - 浅度工作（右下方）
+  { 
+    x: 1088,
+    y: 576,
+    type: '块7-浅度工作',
+    width: 255,
     height: 64
   }
 ]
 
-// 更新向日葵位置
+// 按照块的顺序重新排列向日葵位置
 const SUNFLOWER_POSITIONS = [
-  // 默认起点区域（块1）
+  // 块1 - 默认起点区域
   { x: 134, y: 670 },
   { x: 268, y: 670 },
   
-  // 启动区域（块2）
+  // 块2 - 启动区域
   { x: 402, y: 402 },
   { x: 536, y: 402 },
   
-  // 深度工作区域（块3）
+  // 块3 - 深度工作区域
   { x: 536, y: 134 },
   { x: 670, y: 134 },
   { x: 804, y: 134 },
   
-  // 午间空地区域（块4）
+  // 块4 - 午间空地区域
   { x: 1072, y: 402 },
   { x: 1206, y: 402 },
   
-  // 漫游玩耍区域（块5）
+  // 块5 - 漫游玩耍区域
   { x: 536, y: 871 },
   { x: 670, y: 871 },
   { x: 804, y: 871 },
   { x: 938, y: 871 },
   
-  // 关机区域（块6）
+  // 块6 - 关机区域
   { x: 536, y: 1072 },
   { x: 670, y: 1072 },
   
-  // 浅度工作区域（块7）
+  // 块7 - 浅度工作区域
   { x: 1206, y: 670 },
   { x: 1340, y: 670 }
 ]
@@ -139,8 +140,8 @@ interface Block {
 export default function MarioCat() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [cat, setCat] = useState<Cat>({
-    x: 134,  // 起始位置在第一个方块上
-    y: 670,  // 稍微高于第一个方块
+    x: 77,    // 设置为块1左侧的起始位置
+    y: 568,   // 设置为合适的起始高度
     velocityY: 0,
     velocityX: 0,
     velocityYManual: 0,
@@ -151,6 +152,7 @@ export default function MarioCat() {
   const [blocks, setBlocks] = useState<Block[]>([])
   const [score, setScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
+  const [currentBlock, setCurrentBlock] = useState<string>('')  // 添加当前块名称状态
 
   // 加载游戏资源
   const catImage = useRef<HTMLImageElement | null>(null)
@@ -214,12 +216,17 @@ export default function MarioCat() {
   // 检查碰撞
   const checkCollision = useCallback((x: number, y: number, width: number, height: number) => {
     return blocks.find(block => {
-      return (
+      const collision = (
         x < block.x + block.width &&
         x + width > block.x &&
         y < block.y + block.height &&
         y + height > block.y
       )
+      // 如果发生碰撞，更新当前块名称
+      if (collision) {
+        setCurrentBlock(block.type.replace('块', '空间').replace('-', '：'))
+      }
+      return collision
     })
   }, [blocks])
 
@@ -406,43 +413,69 @@ export default function MarioCat() {
 
       // 绘制分数背景和分数
       if (scoreBgImage.current) {
-        // 在左上角绘制计分背景
         ctx.drawImage(
           scoreBgImage.current,
-          10,  // x坐标
-          10,  // y坐标
+          0,  // x位置改为0
+          0,  // y位置改为0
           SCORE_BG_WIDTH,
           SCORE_BG_HEIGHT
         )
+      }
 
-        // 在背景上绘制分数
-        ctx.fillStyle = '#FFD700'  // 金色
+      // 绘制向日葵图标和分数
+      ctx.fillStyle = '#FFD700'  // 金色
+      ctx.font = 'bold 48px Arial'  // 字体大小
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'middle'
+      
+      const scoreText = `${score}`
+      const textMetrics = ctx.measureText(scoreText)
+      const textWidth = textMetrics.width
+      
+      // 计算向日葵和文本的总宽度
+      const totalWidth = 45 + 15 + textWidth  // 向日葵宽度 + 间距 + 文本宽度
+      const startX = (SCORE_BG_WIDTH - totalWidth) / 2  // 居中偏移
+      const centerY = SCORE_BG_HEIGHT / 2  // 垂直居中位置
+      
+      // 绘制向日葵图标
+      if (sunflowerImage.current) {
+        ctx.drawImage(
+          sunflowerImage.current,
+          startX,          // 从计算的起始位置开始
+          centerY - 22.5,  // 垂直居中（图标高度的一半）
+          45,             // 向日葵图标宽度
+          45              // 向日葵图标高度
+        )
+      }
+
+      // 绘制分数文本
+      ctx.fillText(
+        scoreText,
+        startX + 45 + 15,  // 向日葵右侧位置 + 间距
+        centerY           // 与向日葵垂直对齐
+      )
+
+      // 绘制当前块名称
+      if (currentBlock) {
+        // 绘制半透明背景
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        ctx.fillRect(0, SCORE_BG_HEIGHT, canvas.width, BLOCK_NAME_HEIGHT)
+        
+        // 绘制文本
+        ctx.fillStyle = '#FFFFFF'
         ctx.font = 'bold 32px Arial'
-        ctx.textAlign = 'left'
+        ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        
-        // 绘制向日葵图标
-        if (sunflowerImage.current) {
-          ctx.drawImage(
-            sunflowerImage.current,
-            30,  // x坐标
-            25,  // y坐标
-            30,  // 向日葵图标宽度
-            30   // 向日葵图标高度
-          )
-        }
-        
-        // 绘制分数
         ctx.fillText(
-          `× ${score}`,
-          70,  // x坐标（向日葵图标右侧）
-          40   // y坐标（垂直居中）
+          currentBlock,
+          canvas.width / 2,
+          SCORE_BG_HEIGHT + BLOCK_NAME_HEIGHT / 2
         )
       }
     }, 1000 / 60)
 
     return () => clearInterval(gameLoop)
-  }, [assetsLoaded, cat, sunflowers, score, gameOver, blocks, checkCollision])
+  }, [assetsLoaded, cat, sunflowers, score, gameOver, blocks, checkCollision, currentBlock])
 
   return (
     <div className="relative">
